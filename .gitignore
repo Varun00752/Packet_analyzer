@@ -21,3 +21,17 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# Presentations & Documents (Interview preparation - local only)
+*.pdf
+*.pptx
+generate_pdf_dossier.py
+generate_ppt_presentation.py
+
+# Local test outputs & metrics
+filtered.pcap
+out*.pcap
+benchmark.pcap
+metrics.json
+bench_metrics.json
+rules.conf
