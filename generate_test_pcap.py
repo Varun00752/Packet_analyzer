@@ -137,7 +137,67 @@ def create_dns_query(domain):
     return txid + flags + counts + question
 
 
+
+def generate_benchmark(filename, count=10000):
+    writer = PCAPWriter(filename)
+    user_mac = '00:11:22:33:44:55'
+    gateway_mac = 'aa:bb:cc:dd:ee:ff'
+    
+    domains = [
+        ('www.youtube.com', '172.217.0.1'),
+        ('www.google.com', '142.250.0.1'),
+        ('www.facebook.com', '157.240.0.1'),
+        ('www.netflix.com', '54.0.0.1'),
+        ('www.microsoft.com', '20.0.0.1'),
+        ('github.com', '140.82.0.1'),
+        ('twitter.com', '104.244.0.1'),
+        ('open.spotify.com', '35.0.0.1')
+    ]
+    
+    seq = 1000
+    written = 0
+    while written < count:
+        idx = written % len(domains)
+        sni, dst_ip = domains[idx]
+        user_ip = f'192.168.1.{10 + (written % 200)}'
+        src_port = 1024 + (written % 60000)
+        
+        # TLS handshake
+        tls_data = create_tls_client_hello(sni)
+        eth = create_ethernet_header(user_mac, gateway_mac)
+        tcp = create_tcp_header(src_port, 443, seq, 1, 0x18)
+        ip = create_ip_header(user_ip, dst_ip, 6, len(tcp) + len(tls_data))
+        writer.write_packet(eth + ip + tcp + tls_data)
+        written += 1
+        seq += 100
+        
+        if written < count and written % 5 == 0:
+            dns_data = create_dns_query(sni)
+            eth = create_ethernet_header(user_mac, gateway_mac)
+            udp = create_udp_header(src_port, 53, len(dns_data))
+            ip = create_ip_header(user_ip, '8.8.8.8', 17, len(udp) + len(dns_data))
+            writer.write_packet(eth + ip + udp + dns_data)
+            written += 1
+            
+    writer.close()
+    print(f'Generated benchmark PCAP: {filename} with {written} packets.')
+
 def main():
+    import sys
+    if '--benchmark' in sys.argv:
+        count = 10000
+        if '--count' in sys.argv:
+            idx = sys.argv.index('--count')
+            if idx + 1 < len(sys.argv):
+                count = int(sys.argv[idx + 1])
+        out_file = 'benchmark.pcap'
+        if '--output' in sys.argv:
+            idx = sys.argv.index('--output')
+            if idx + 1 < len(sys.argv):
+                out_file = sys.argv[idx + 1]
+        generate_benchmark(out_file, count)
+        return
+
     writer = PCAPWriter('test_dpi.pcap')
     
     # Source: User's machine

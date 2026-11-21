@@ -1,0 +1,24 @@
+# =============================================================================
+# DPI Security & Filtering Policy Configuration File
+# Syntax:
+#   block-app <ApplicationName>     (e.g., YouTube, TikTok, Facebook, Netflix)
+#   block-domain <DomainOrWildcard> (e.g., *.doubleclick.net, ads.example.com)
+#   block-ip <IPv4Address>          (e.g., 192.168.1.50)
+#   block-cidr <Subnet/Mask>        (e.g., 10.0.0.0/8, 172.16.0.0/12)
+#   block-port <PortNumber>         (e.g., 80, 8080, 23)
+# =============================================================================
+
+# Application Layer Blocking
+block-app YouTube
+block-app TikTok
+
+# Domain & Subdomain Blacklist
+block-domain *.doubleclick.net
+block-domain telemetry.*
+
+# Network Layer Subnet & IP Filters
+block-cidr 10.0.0.0/8
+block-ip 192.168.1.50
+
+# Insecure Port Filtering
+block-port 23

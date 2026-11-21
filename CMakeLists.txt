@@ -1,24 +1,37 @@
 cmake_minimum_required(VERSION 3.16)
-project(PacketAnalyzer VERSION 1.0)
+project(DeepPacketInspection VERSION 2.5 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Source files
-set(SOURCES
-    src/main.cpp
-    src/pcap_reader.cpp
-    src/packet_parser.cpp
-)
+# Optimization flags
+if(MSVC)
+    add_compile_options(/O2 /W4)
+else()
+    add_compile_options(-O3 -Wall -Wextra)
+endif()
 
 # Header files location
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Create the executable
-add_executable(packet_analyzer ${SOURCES})
+# Threads
+find_package(Threads REQUIRED)
 
-# For macOS, we might need to link against system libraries later
-if(APPLE)
-    # Add any macOS-specific settings here
-endif()
+# Target 1: Core DPI Engine (Multi-threaded High-Performance Classifier)
+add_executable(dpi_engine
+    src/dpi_mt.cpp
+    src/pcap_reader.cpp
+    src/packet_parser.cpp
+    src/sni_extractor.cpp
+    src/types.cpp
+)
+target_link_libraries(dpi_engine PRIVATE Threads::Threads)
+
+# Target 2: Basic Packet Analyzer (L2-L4 Packet Inspector)
+add_executable(packet_analyzer
+    src/main.cpp
+    src/pcap_reader.cpp
+    src/packet_parser.cpp
+)
+target_link_libraries(packet_analyzer PRIVATE Threads::Threads)

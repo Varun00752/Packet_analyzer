@@ -1,7 +1,7 @@
 # DPI Engine - Deep Packet Inspection System
 
 
-This document explains **everything** about this project - from basic networking concepts to the complete code architecture. After reading this, you should understand exactly how packets flow through the system without needing to read the code.
+This document explains **everything** about this project - from basic networking concepts to the complete code architecture. After reading this, you should understand exactly how packets flow through the system without needing to read the code.`
 
 ---
 
@@ -17,11 +17,11 @@ This document explains **everything** about this project - from basic networking
 8. [How SNI Extraction Works](#8-how-sni-extraction-works)
 9. [How Blocking Works](#9-how-blocking-works)
 10. [Building and Running](#10-building-and-running)
-11. [Understanding the Output](#11-understanding-the-output)
+11. [Understanding the Output](#11-understanding-the-output)`
 
 ---
 
-## 1. What is DPI?
+## 1. What is DPI?`
 
 **Deep Packet Inspection (DPI)** is a technology used to examine the contents of network packets as they pass through a checkpoint. Unlike simple firewalls that only look at packet headers (source/destination IP), DPI looks *inside* the packet payload.
 
@@ -38,7 +38,7 @@ User Traffic (PCAP) → [DPI Engine] → Filtered Traffic (PCAP)
                     - Identifies apps (YouTube, Facebook, etc.)
                     - Blocks based on rules
                     - Generates reports
-```
+````
 
 ---
 
@@ -90,14 +90,14 @@ A **connection** (or "flow") is uniquely identified by 5 values:
 | Destination IP | 172.217.14.206 | Where it's going |
 | Source Port | 54321 | Sender's application identifier |
 | Destination Port | 443 | Service being accessed (443 = HTTPS) |
-| Protocol | TCP (6) | TCP or UDP |
+| Protocol | TCP (6) | TCP or UDP |`
 
 **Why is this important?** 
 - All packets with the same 5-tuple belong to the same connection
 - If we block one packet of a connection, we should block all of them
 - This is how we "track" conversations between computers
 
-### What is SNI?
+### What is SNI?`
 
 **Server Name Indication (SNI)** is part of the TLS/HTTPS handshake. When you visit `https://www.youtube.com`:
 
@@ -113,9 +113,9 @@ TLS Client Hello:
 └── Extensions:
     └── SNI Extension:
         └── Server Name: "www.youtube.com"  ← We extract THIS!
-```
+````
 
-**This is the key to DPI**: Even though HTTPS is encrypted, the domain name is visible in the first packet!
+**This is the key to DPI**: Even though HTTPS is encrypted, the domain name is visible in the first packet!`
 
 ---
 
@@ -139,7 +139,7 @@ TLS Client Hello:
 | Version | File | Use Case |
 |---------|------|----------|
 | Simple (Single-threaded) | `src/main_working.cpp` | Learning, small captures |
-| Multi-threaded | `src/dpi_mt.cpp` | Production, large captures |
+| Multi-threaded | `src/dpi_mt.cpp` | Production, large captures |`
 
 ---
 
@@ -171,7 +171,7 @@ packet_analyzer/
 ├── generate_test_pcap.py      # Creates test data
 ├── test_dpi.pcap              # Sample capture with various traffic
 └── README.md                  # This file!
-```
+````
 
 ---
 
@@ -184,12 +184,12 @@ Let's trace a single packet through `main_working.cpp`:
 ```cpp
 PcapReader reader;
 reader.open("capture.pcap");
-```
+````
 
 **What happens:**
 1. Open the file in binary mode
 2. Read the 24-byte global header (magic number, version, etc.)
-3. Verify it's a valid PCAP file
+3. Verify it's a valid PCAP file`
 
 **PCAP File Format:**
 ```
@@ -213,7 +213,7 @@ while (reader.readNextPacket(raw)) {
     // raw.data contains the packet bytes
     // raw.header contains timestamp and length
 }
-```
+````
 
 **What happens:**
 1. Read 16-byte packet header
@@ -224,7 +224,7 @@ while (reader.readNextPacket(raw)) {
 
 ```cpp
 PacketParser::parse(raw, parsed);
-```
+````
 
 **What happens (in packet_parser.cpp):**
 
@@ -244,14 +244,14 @@ parsed.src_port = 54321
 parsed.dest_port = 443
 parsed.protocol = 6 (TCP)
 parsed.has_tcp  = true
-```
+````
 
 **Parsing the Ethernet Header (14 bytes):**
 ```
 Bytes 0-5:   Destination MAC
 Bytes 6-11:  Source MAC
 Bytes 12-13: EtherType (0x0800 = IPv4)
-```
+````
 
 **Parsing the IP Header (20+ bytes):**
 ```
@@ -260,7 +260,7 @@ Byte 8:      TTL (Time To Live)
 Byte 9:      Protocol (6=TCP, 17=UDP)
 Bytes 12-15: Source IP
 Bytes 16-19: Destination IP
-```
+````
 
 **Parsing the TCP Header (20+ bytes):**
 ```
@@ -283,7 +283,7 @@ tuple.dst_port = parsed.dest_port;
 tuple.protocol = parsed.protocol;
 
 Flow& flow = flows[tuple];  // Get or create
-```
+````
 
 **What happens:**
 - The flow table is a hash map: `FiveTuple → Flow`
@@ -302,7 +302,7 @@ if (pkt.tuple.dst_port == 443 && pkt.payload_length > 5) {
         flow.app_type = sniToAppType(*sni); // AppType::YOUTUBE
     }
 }
-```
+````
 
 **What happens (in sni_extractor.cpp):**
 
@@ -341,7 +341,7 @@ if (pkt.tuple.dst_port == 443 && pkt.payload_length > 5) {
 if (rules.isBlocked(tuple.src_ip, flow.app_type, flow.sni)) {
     flow.blocked = true;
 }
-```
+````
 
 **What happens:**
 ```cpp
@@ -386,7 +386,7 @@ for (const auto& [tuple, flow] : flows) {
 "YouTube: 150 packets (15%)"
 "Facebook: 80 packets (8%)"
 ...
-```
+````
 
 ---
 
@@ -436,7 +436,7 @@ The multi-threaded version (`dpi_mt.cpp`) adds **parallelism** for high performa
 
 1. **Load Balancers (LBs):** Distribute work across FPs
 2. **Fast Paths (FPs):** Do the actual DPI processing
-3. **Consistent Hashing:** Same 5-tuple always goes to same FP
+3. **Consistent Hashing:** Same 5-tuple always goes to same FP`
 
 **Why consistent hashing matters:**
 ```
@@ -550,21 +550,21 @@ class TSQueue {
         return item;
     }
 };
-```
+````
 
 **How it works:**
 - `push()`: Producer adds item, signals waiting consumers
 - `pop()`: Consumer waits until item available, then takes it
 - `mutex`: Only one thread can access at a time
-- `condition_variable`: Efficient waiting (no busy-loop)
+- `condition_variable`: Efficient waiting (no busy-loop)`
 
 ---
 
 ## 7. Deep Dive: Each Component
 
-### pcap_reader.h / pcap_reader.cpp
+### pcap_reader.h / pcap_reader.cpp`
 
-**Purpose:** Read network captures saved by Wireshark
+**Purpose:** Read network captures saved by Wireshark`
 
 **Key structures:**
 ```cpp
@@ -582,16 +582,16 @@ struct PcapPacketHeader {
     uint32_t incl_len;       // Bytes saved in file
     uint32_t orig_len;       // Original packet size
 };
-```
+````
 
 **Key functions:**
 - `open(filename)`: Open PCAP, validate header
 - `readNextPacket(raw)`: Read next packet into buffer
 - `close()`: Clean up
 
-### packet_parser.h / packet_parser.cpp
+### packet_parser.h / packet_parser.cpp`
 
-**Purpose:** Extract protocol fields from raw bytes
+**Purpose:** Extract protocol fields from raw bytes`
 
 **Key function:**
 ```cpp
@@ -602,7 +602,7 @@ bool PacketParser::parse(const RawPacket& raw, ParsedPacket& parsed) {
     // OR
     parseUDP(...);       // Extract ports
 }
-```
+````
 
 **Important concepts:**
 
@@ -615,9 +615,9 @@ uint16_t port = ntohs(*(uint16_t*)(data + offset));
 uint32_t seq = ntohl(*(uint32_t*)(data + offset));
 ```
 
-### sni_extractor.h / sni_extractor.cpp
+### sni_extractor.h / sni_extractor.cpp`
 
-**Purpose:** Extract domain names from TLS and HTTP
+**Purpose:** Extract domain names from TLS and HTTP`
 
 **For TLS (HTTPS):**
 ```cpp
@@ -631,7 +631,7 @@ std::optional<std::string> SNIExtractor::extract(
     // 4. Find SNI extension (type 0x0000)
     // 5. Extract hostname string
 }
-```
+````
 
 **For HTTP:**
 ```cpp
@@ -645,9 +645,9 @@ std::optional<std::string> HTTPHostExtractor::extract(
 }
 ```
 
-### types.h / types.cpp
+### types.h / types.cpp`
 
-**Purpose:** Define data structures used throughout
+**Purpose:** Define data structures used throughout`
 
 **FiveTuple:**
 ```cpp
@@ -660,7 +660,7 @@ struct FiveTuple {
     
     bool operator==(const FiveTuple& other) const;
 };
-```
+````
 
 **AppType:**
 ```cpp
@@ -674,7 +674,7 @@ enum class AppType {
     FACEBOOK,
     // ... more apps
 };
-```
+````
 
 **sniToAppType function:**
 ```cpp
@@ -685,7 +685,7 @@ AppType sniToAppType(const std::string& sni) {
         return AppType::FACEBOOK;
     // ... more patterns
 }
-```
+````
 
 ---
 
@@ -711,7 +711,7 @@ When you visit `https://www.youtube.com`:
      │ ◄═══ Encrypted Data ══════════════════► │
      │      (from here on, everything is       │
      │       encrypted - we can't see it)      │
-```
+````
 
 **We can only extract SNI from the Client Hello!**
 
@@ -799,7 +799,7 @@ std::optional<std::string> SNIExtractor::extract(
     
     return std::nullopt;  // SNI not found
 }
-```
+````
 
 ---
 
@@ -837,7 +837,7 @@ Packet arrives
             FORWARD
 ```
 
-### Flow-Based Blocking
+### Flow-Based Blocking`
 
 **Important:** We block at the *flow* level, not packet level.
 
@@ -853,12 +853,12 @@ Connection to YouTube:
   Packet 5 (Data)          → Flow is BLOCKED → DROP
   Packet 6 (Data)          → Flow is BLOCKED → DROP
   ...all subsequent packets → DROP
-```
+````
 
 **Why this approach?**
 - We can't identify the app until we see the Client Hello
 - Once identified, we block all future packets of that flow
-- The connection will fail/timeout on the client
+- The connection will fail/timeout on the client`
 
 ---
 
@@ -870,7 +870,7 @@ Connection to YouTube:
 - **g++** or **clang++**
 - No external libraries needed!
 
-### Build Commands
+### Build Commands`
 
 **Simple Version:**
 ```bash
@@ -880,7 +880,7 @@ g++ -std=c++17 -O2 -I include -o dpi_simple \
     src/packet_parser.cpp \
     src/sni_extractor.cpp \
     src/types.cpp
-```
+````
 
 **Multi-threaded Version:**
 ```bash
@@ -892,34 +892,47 @@ g++ -std=c++17 -pthread -O2 -I include -o dpi_engine \
     src/types.cpp
 ```
 
-### Running
+### Running`
 
-**Basic usage:**
-```bash
+**1-Click Build (Windows):**
+``powershell
+.\build.bat
+`
+or via g++:
+`ash
+g++ -std=c++17 -O3 -Iinclude src/pcap_reader.cpp src/packet_parser.cpp src/sni_extractor.cpp src/types.cpp src/dpi_mt.cpp -o dpi_engine.exe
+``
+
+**Basic Run (Analyze & Forward):**
+`ash
 ./dpi_engine test_dpi.pcap output.pcap
-```
+``
 
-**With blocking:**
-```bash
-./dpi_engine test_dpi.pcap output.pcap \
+**Advanced Security Filtering:**
+`ash
+./dpi_engine test_dpi.pcap filtered.pcap \
     --block-app YouTube \
     --block-app TikTok \
-    --block-ip 192.168.1.50 \
-    --block-domain facebook
-```
+    --block-domain *.doubleclick.net \
+    --block-cidr 10.0.0.0/8 \
+    --block-port 8080 \
+    --export-json telemetry.json
+``
 
-**Configure threads (multi-threaded only):**
-```bash
-./dpi_engine input.pcap output.pcap --lbs 4 --fps 4
-# Creates 4 LB threads × 4 FP threads = 16 processing threads
-```
+**Using a Policy Rules Configuration File:**
+`ash
+./dpi_engine test_dpi.pcap filtered.pcap --rules rules.conf.example --export-json metrics.json
+``
 
-### Creating Test Data
+**High-Throughput Multithreading & Benchmark Mode:**
+`ash
+# 1. Generate high-volume test traffic (10,000 to 50,000 packets)
+python generate_test_pcap.py --benchmark --count 10000 --output benchmark.pcap
 
-```bash
-python3 generate_test_pcap.py
-# Creates test_dpi.pcap with sample traffic
-```
+# 2. Run with 4 Load Balancers and 16 worker threads
+./dpi_engine benchmark.pcap filtered.pcap --lbs 4 --fps 4 --export-json bench_metrics.json
+`
+`
 
 ---
 
@@ -988,7 +1001,7 @@ python3 generate_test_pcap.py
 | Dropped | Packets blocked (not written) |
 | Thread Statistics | Work distribution across threads |
 | Application Breakdown | Traffic classification results |
-| Detected SNIs | Actual domain names found |
+| Detected SNIs | Actual domain names found |`
 
 ---
 
@@ -1028,7 +1041,7 @@ python3 generate_test_pcap.py
 
 5. **Add Persistent Rules**
    - Save rules to file
-   - Load on startup
+   - Load on startup`
 
 ---
 
@@ -1042,7 +1055,7 @@ This DPI engine demonstrates:
 4. **Multi-threaded Architecture** - Scaling with thread pools
 5. **Producer-Consumer Pattern** - Thread-safe queues
 
-The key insight is that even HTTPS traffic leaks the destination domain in the TLS handshake, allowing network operators to identify and control application usage.
+The key insight is that even HTTPS traffic leaks the destination domain in the TLS handshake, allowing network operators to identify and control application usage.`
 
 ---
 
